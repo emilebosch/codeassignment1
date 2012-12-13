@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using log4net;
 using Microsoft.VisualBasic.FileIO;
 using System.Configuration;
@@ -17,6 +18,7 @@ namespace OVImport
         private static ILog _log = LogManager.GetLogger(typeof(OVTransactionImport));
         TextFieldParser parser;
         SimpleRestApi api = new SimpleRestApi(ConfigurationManager.AppSettings["ovservice"]);
+        private const int RETRY_COUNT = 10;
 
         /// <summary>
         /// Imports the given csv file
@@ -24,15 +26,20 @@ namespace OVImport
         public void StartTransactionImport(string csvfile)
         {
             int failedCount = 0;
-
+            int attempts = 0;
             var objectsToPost = GetObjectsToPost(csvfile);
             var failedPosts = PostObjects(objectsToPost);
 
-            // Retry the failed objects one more time..
-            if (failedPosts.Count > 0)
+            while (attempts <= RETRY_COUNT)
             {
-                var postObjects = PostObjects(failedPosts);
-                failedCount = postObjects.Count;
+                if (failedPosts.Count == 0)
+                {
+                    break;
+                }
+            
+                Thread.Sleep(10000);
+                failedPosts = PostObjects(failedPosts);
+                attempts++;
             }
 
             _log.InfoFormat("Processed {0} objects. Number of failed results: {1}", objectsToPost.Count, failedCount);
