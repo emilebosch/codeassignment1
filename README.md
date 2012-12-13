@@ -22,7 +22,7 @@ Quite, simple right?
 
 But here's the catch:
 
-This webservice has been written by CapGemini and therefore is not very stable or efficient. It tends to
+This webservice has been written by GapCemini and therefore is not very stable or efficient. It tends to
 crash, be unreachable or just be a jackass and be slow. Additionaly, there are some superelite hackers on the subway system that make fake id cards with users that don't exist in the system.
 
 Make changes in the code such that:
