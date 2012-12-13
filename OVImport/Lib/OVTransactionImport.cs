@@ -18,7 +18,7 @@ namespace OVImport
 
         public void StartTransactionImport(string csvfile)
         {
-            api = new SimpleRestApi(ConfigurationManager.AppSettings["ovservice"] ?? "http://localhost:5000/");
+            api = new SimpleRestApi(ConfigurationManager.AppSettings["ovservice"]);
 
             parser = new TextFieldParser(csvfile);
             parser.Delimiters = new [] {","};
@@ -43,7 +43,11 @@ namespace OVImport
                         error = default(String)
                     });
 
-                Console.WriteLine(apiresponse.success);
+
+                if (apiresponse.success)
+                {
+                    Console.WriteLine("Succesfully uploaded transaction!");
+                }
             }
         }
     }
