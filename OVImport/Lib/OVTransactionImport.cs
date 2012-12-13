@@ -34,7 +34,7 @@ namespace OVImport
                     api.Post("ovtransactionimport/process", 
                     new
                     {
-                        id = csvFields[0],
+                        id = Convert.ToInt64(csvFields[0]),
                         date = csvFields[1],
                         station = csvFields[2],
                         action = csvFields[3],
