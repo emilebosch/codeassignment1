@@ -57,7 +57,7 @@ id,date,station,action,cardid,userid
 ```
 
 
-### REST specs
+### OV Transaction Service (REST specs)
 
 The webservice is reachable on: `http://localhost:5000/ovtransactionimport/process` it accepts a JSON HTTP POST serialized 
 object like:
@@ -85,3 +85,30 @@ public ActionResult Process(TransactionRecord record)
     return Json(new { success = true});    
 }
 ```
+
+#### Service reponses
+
+**OK**
+Everthing is cool, and the transaction is processed
+
+```
+xx
+```
+
+**CARDNOTFOUND***
+The card is not found in the system, this is worrying cause this means, probably is being a fraud.
+
+```
+xx
+```
+
+**USERNOTFOUND**
+The user is not found in the system, this is ackward as well, maybe a fraud?
+
+```
+xxx
+```
+
+### Side notes
+
+It is rumoured that this service is during christmas overloaded and may not be up, responsive or just busy at times.

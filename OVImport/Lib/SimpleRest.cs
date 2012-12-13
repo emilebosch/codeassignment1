@@ -9,7 +9,7 @@ using System.IO;
 namespace OVImport
 {
     /// <summary>
-    /// Super minimal layer for rest requests. 
+    /// Super minimal layer for rest requests 
     /// </summary>
     class SimpleRestApi
     {    
@@ -23,12 +23,13 @@ namespace OVImport
         }
 
         /// <summary>
-        /// Stuurt een POST command naar een web-service
+        /// Send a POST request to a rest endpoint
         /// </summary>
         public Response Post<Response>(string endpoint, object req, Response r)
         {
             var request = Request(endpoint, "POST");
             var json = JsonConvert.SerializeObject(req);
+            Console.WriteLine(json);
             using (var writer = new StreamWriter(request.GetRequestStream()))
             {
                 writer.Write(json);
@@ -43,7 +44,7 @@ namespace OVImport
         }
 
         /// <summary>
-        /// Stuurt een PUT command naar een web-service
+        /// Send a PUT request to a rest endpoint
         /// </summary>
         public Response Put<Response>(string endpoint, object req, Response r)
         {
@@ -63,7 +64,7 @@ namespace OVImport
         }
 
         /// <summary>
-        /// Stuurt een GET
+        /// Send a GET request to a rest endpoint
         /// </summary>
         public Response Get<Response>(string url, Response r)
         {
@@ -77,17 +78,16 @@ namespace OVImport
         }
 
         /// <summary>
-        /// Make the web request if given
+        /// Create a web request with given method.
         /// </summary>
         private WebRequest Request(string url, string method)
         {
             var request = (HttpWebRequest)WebRequest.Create(new Uri(rootUrl + url));
             request.Method = method;
             request.ContentType = "application/json";
-            request.KeepAlive = false;
-            request.KeepAlive = false;
+            request.KeepAlive = false;                          //Keep alive kills the connection pool :( 
             request.ProtocolVersion = HttpVersion.Version10;
-            request.ServicePoint.ConnectionLimit = 1;
+            request.ServicePoint.ConnectionLimit = 1;           
   
             if (credentials == null) 
                 return request;
@@ -101,7 +101,6 @@ namespace OVImport
             {
                 request.Credentials = credentials;
             }
-            
 
             return request;
         }
