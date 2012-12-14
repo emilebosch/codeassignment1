@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.VisualBasic.FileIO;
 using System.Configuration;
+using log4net;
 
 namespace OVImport
 {
@@ -15,6 +13,7 @@ namespace OVImport
     {
         TextFieldParser parser;
         SimpleRestApi api;
+        private static readonly ILog log = LogManager.GetLogger(typeof(Program));
 
         /// <summary>
         /// Imports the given csv file
@@ -22,19 +21,20 @@ namespace OVImport
         public void StartTransactionImport(string csvfile)
         {
             api = new SimpleRestApi(ConfigurationManager.AppSettings["ovservice"]);
+            log4net.Config.XmlConfigurator.Configure();
 
             parser = new TextFieldParser(csvfile);
-            parser.Delimiters = new [] {","};
+            parser.Delimiters = new[] { "," };
             parser.ReadFields();
 
             while (!parser.EndOfData)
             {
                 var csvFields = parser.ReadFields();
-                var apiresponse = 
-                    api.Post("ovtransactionimport/process", 
+                var apiresponse =
+                    api.Post("ovtransactionimport/process",
                     new
                     {
-                        id = Convert.ToInt64(csvFields[0]),
+                        id = csvFields[0],
                         date = csvFields[1],
                         station = csvFields[2],
                         action = csvFields[3],
@@ -49,12 +49,11 @@ namespace OVImport
 
                 if (apiresponse.success)
                 {
-                    Console.WriteLine("Succesfully uploaded transaction!");
+                    log.Info("Succesfully uploaded transaction!");
                 }
                 else
                 {
-                    throw new Exception("OMG ERROER!!!!");
-
+                    log.ErrorFormat("API responsed with an error {0}", apiresponse.error);
                 }
             }
         }
