@@ -36,8 +36,20 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Gallio">
+      <HintPath>..\packages\Gallio.3.3.1\lib\NET40\Gallio.dll</HintPath>
+    </Reference>
+    <Reference Include="Gallio40">
+      <HintPath>..\packages\Gallio.3.3.1\lib\NET40\Gallio40.dll</HintPath>
+    </Reference>
     <Reference Include="log4net">
       <HintPath>..\packages\log4net.2.0.0\lib\net40-client\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="MbUnit">
+      <HintPath>..\packages\Gallio.3.3.1\lib\NET40\MbUnit.dll</HintPath>
+    </Reference>
+    <Reference Include="MbUnit40">
+      <HintPath>..\packages\Gallio.3.3.1\lib\NET40\MbUnit40.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Newtonsoft.Json">
