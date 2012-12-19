@@ -62,6 +62,8 @@
   <ItemGroup>
     <Compile Include="Lib\SimpleRest.cs" />
     <Compile Include="Lib\OVTransactionImport.cs" />
+    <Compile Include="Models\APIResponse.cs" />
+    <Compile Include="Models\Line.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

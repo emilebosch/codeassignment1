@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MbUnit.Framework;
 using Microsoft.VisualBasic.FileIO;
 using System.Configuration;
+using OVImport.Models;
 using log4net;
 
 namespace OVImport
@@ -31,13 +32,29 @@ namespace OVImport
             while (!parser.EndOfData)
             {                
                 IList<string> csvFields = parser.ReadFields();
-                Line CSVLine = new Line(csvFields);
 
-                Retry.Repeat(3)
-                     .WithPolling(TimeSpan.FromSeconds(1))
-                     .WithTimeout(TimeSpan.FromSeconds(10))
-                     .Until(() => PostCSVLine(CSVLine));
+                if (HasValidNumberOfFields(csvFields))
+                {
+                    Line CSVLine = new Line(csvFields);
+
+                    try
+                    {
+                        Retry.Repeat(3)
+                         .WithPolling(TimeSpan.FromSeconds(1))
+                         .WithTimeout(TimeSpan.FromSeconds(10))
+                         .Until(() => PostCSVLine(CSVLine));
+                    }
+                    catch (Exception)
+                    {
+                        log.DebugFormat("Max retries reached, skipping line: {0}", CSVLine);
+                    }  
+                }      
             }
+        }
+
+        private bool HasValidNumberOfFields(IList<string> csvFields)
+        {
+            return csvFields.Count == 6;
         }
 
         private bool PostCSVLine(Line line)
@@ -50,36 +67,10 @@ namespace OVImport
             }
             else
             {
-                log.ErrorFormat("API responsed with an error {0}", response.error);
+                log.ErrorFormat("API responsed with an error {0}: {1}", response.error, line);
             }
 
             return response.success;
-        }
-
-        public class Line
-        {
-            public Line(IList<string> csvFields)
-            {
-                id = Convert.ToInt64(csvFields[0]);
-                date = csvFields[1];
-                station = csvFields[2];
-                action = csvFields[3];
-                cardid = Convert.ToInt64(csvFields[4]);
-                userid = Convert.ToInt64(csvFields[5]);
-            }
-
-            public long id;
-            public string date;
-            public string station;
-            public string action;
-            public long cardid;
-            public long userid;
-        }
-
-        public class APIResponse
-        {
-            public bool success;
-            public string error;
         }
     }
 }
