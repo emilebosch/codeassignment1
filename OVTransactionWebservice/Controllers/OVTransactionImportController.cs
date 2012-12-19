@@ -44,7 +44,12 @@ namespace OVTransactionWebservice.Controllers
 				return Json(new { sucess = false, error = "CARDNOTFOUND" });
 			}
 
-            return Json(new { success = true});    
+			int problemThreshold = new Random(DateTime.Now.Millisecond).Next(20);
+			if (problemThreshold == 0)
+			{
+				throw new ApplicationException("unexpected error");
+			}
+			return Json(new { success = true });    
         }
     }
 

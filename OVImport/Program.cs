@@ -27,7 +27,7 @@ namespace OVImport
 				{
 					// log exception
 					_logger.ErrorFormat("Stopped because of a failure: {0}", e);
-					_logger.WarnFormat("The batch can be resumed using the /SkipUntil switch like this: /su {0}", process.LastSuccessfullyProcessed);
+					_logger.WarnFormat("The batch can be resumed using the SkipUntil switch like this: /su {0}", process.LastSuccessfullyProcessed);
 				}
 				_logger.InfoFormat("Read {0} records. Imported {1} transactions.",
 					process.ApiCaller.ItemsProcessed,

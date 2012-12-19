@@ -132,17 +132,12 @@ namespace OVImport
 						LogFunctionalProblem(apiresponse.error, csvFields);
 						return;
 					}
-					int problemThreshold = new Random(DateTime.Now.Millisecond).Next(10);
-					if (problemThreshold == 0)
-					{
-						throw new ApplicationException("unexpected error");
-					}
 					_logger.DebugFormat("Processed id {0}", csvFields[0]);
 				}
 				);
 			apiCaller.Name = API_CALLER_NODE;
 			apiCaller.ThreadNumber = Arguments.Current.ParallelPosts;
-			apiCaller.Retries = Arguments.Current.PostAttempts;
+			apiCaller.Retries = Arguments.Current.PostRetries;
 			apiCaller.KeepOrder = true;
 			return apiCaller;
 		}
