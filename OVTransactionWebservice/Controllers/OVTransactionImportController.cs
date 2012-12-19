@@ -34,15 +34,15 @@ namespace OVTransactionWebservice.Controllers
         public ActionResult Process() 
         {
             var record = this.GetJson <TransactionRecord>();
-            if (record.userid == 1019)
-            {
-                return Json(new { sucess = false, error = "USERNOTFOUND" });
-            }
+			if (record.userid == 1019)
+			{
+				return Json(new { sucess = false, error = "USERNOTFOUND" });
+			}
 
-            if (record.cardid == 2782828)
-            {
-                return Json(new { sucess = false, error = "CARDNOTFOUND" });
-            }
+			if (record.cardid == 2782828)
+			{
+				return Json(new { sucess = false, error = "CARDNOTFOUND" });
+			}
 
             return Json(new { success = true});    
         }

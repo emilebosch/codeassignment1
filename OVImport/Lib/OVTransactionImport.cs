@@ -4,6 +4,10 @@ using System.Linq;
 using System.Text;
 using Microsoft.VisualBasic.FileIO;
 using System.Configuration;
+using BatchFlow;
+using OVImport.Lib;
+using System.IO;
+using log4net;
 
 namespace OVImport
 {
@@ -13,50 +17,151 @@ namespace OVImport
     /// </summary>
     public class OVTransactionImport
     {
-        TextFieldParser parser;
-        SimpleRestApi api;
+		static ILog _logger = LogManager.GetLogger(typeof(OVTransactionImport));
+		static ILog _functionalLogger = LogManager.GetLogger("Functional");
 
-        /// <summary>
-        /// Imports the given csv file
-        /// </summary>
-        public void StartTransactionImport(string csvfile)
-        {
-            api = new SimpleRestApi(ConfigurationManager.AppSettings["ovservice"]);
+		public bool FunctionalWarningsLogged { get; set; }
+		void LogFunctionalProblem(string error, string[] line)
+		{
+			_functionalLogger.Warn(String.Format("# {0}:\n{1}", error, String.Join(",", line)));
+			this.FunctionalWarningsLogged = true;
+		}
 
-            parser = new TextFieldParser(csvfile);
-            parser.Delimiters = new [] {","};
-            parser.ReadFields();
+		Flow importFlow;
+		public OVTransactionImport()
+		{
+			importFlow = Flow.FromAsciiArt(@"r-->a-->s",
+					  new Dictionary<char, TaskNode>()
+					  {
+						  {'r', GetCsvReader()},
+						  {'a', GetApiCaller()},
+						  {'s', GetSuccessLogger()}
+					  }
+					  );
 
-            while (!parser.EndOfData)
-            {
-                var csvFields = parser.ReadFields();
-                var apiresponse = 
-                    api.Post("ovtransactionimport/process", 
-                    new
-                    {
-                        id = csvFields[0],
-                        date = csvFields[1],
-                        station = csvFields[2],
-                        action = csvFields[3],
-                        cardid = Convert.ToInt64(csvFields[4]),
-                        userid = Convert.ToInt64(csvFields[5])
-                    },
-                    new
-                    {
-                        success = default(Boolean),
-                        error = default(String)
-                    });
+		}
+		/// <summary>
+		/// Imports the given csv file
+		/// </summary>
+		public void RunTransactionImport(string csvfile)
+		{
+			this.FunctionalWarningsLogged = false;
+			_logger.Info("Setting up flow");
+			importFlow.Start();
+			_logger.Info("Started flow");
+			importFlow.RunToCompletion();
+		}
 
-                if (apiresponse.success)
-                {
-                    Console.WriteLine("Succesfully uploaded transaction!");
-                }
-                else
-                {
-                    throw new Exception("OMG ERROER!!!!");
+		const string CSV_READER_NODE = "CsvReader";
+		const string API_CALLER_NODE = "ApiCaller";
+		const string SUCCESS_LOGGER_NODE = "SuccessLogger";
 
-                }
-            }
-        }
+
+		private TaskNode GetCsvReader()
+		{
+			StartPoint<string[]> csvReaderNode = new StartPoint<string[]>(
+				(outQueue) =>
+				{
+					TextFieldParser parser = new TextFieldParser(Arguments.Current.Csv);
+					parser.Delimiters = new[] { "," };
+					parser.ReadFields(); // skip first line
+
+					string waitingFor = Arguments.Current.SkipUntil;
+					while (!parser.EndOfData)
+					{
+						var fields = parser.ReadFields();
+						if (waitingFor != null)
+						{
+							if (fields[0] == waitingFor)
+							{
+								waitingFor = null;
+							}
+							continue;
+						}
+						outQueue.Send(fields);
+					}
+				}
+				);
+			csvReaderNode.Name = CSV_READER_NODE;
+			return csvReaderNode;
+		}
+
+		private TaskNode GetApiCaller()
+		{
+			SimpleRestApi api = new SimpleRestApi(Arguments.Current.ApiRoot);
+			TaskNode<string[], string> apiCaller = new TaskNode<string[], string>(
+				(csvFields, successOut) =>
+				{
+					long cardId;
+					long userId;
+					try
+					{
+						cardId = long.Parse(csvFields[4]);
+						userId = long.Parse(csvFields[5]);
+					}
+					catch (Exception)
+					{
+						LogFunctionalProblem("Error occurred while reading userId and cardId", csvFields);
+						return;
+					}
+					var request =
+						new
+						{
+							id = csvFields[0],
+							date = csvFields[1],
+							station = csvFields[2],
+							action = csvFields[3],
+							cardid = cardId,
+							userid = userId
+						};
+					var apiresponse =
+						api.Post("ovtransactionimport/process",
+						request,
+						new
+						{
+							success = default(Boolean),
+							error = default(String)
+						});
+
+					if (apiresponse.success)
+					{
+						successOut.Send(csvFields[0]);
+					}
+					else
+					{
+						LogFunctionalProblem(apiresponse.error, csvFields);
+						return;
+					}
+					int problemThreshold = new Random(DateTime.Now.Millisecond).Next(10);
+					if (problemThreshold == 0)
+					{
+						throw new ApplicationException("unexpected error");
+					}
+					_logger.DebugFormat("Processed id {0}", csvFields[0]);
+				}
+				);
+			apiCaller.Name = API_CALLER_NODE;
+			apiCaller.ThreadNumber = Arguments.Current.ParallelPosts;
+			apiCaller.Retries = Arguments.Current.PostAttempts;
+			apiCaller.KeepOrder = true;
+			return apiCaller;
+		}
+
+		private TaskNode GetSuccessLogger()
+		{
+			EndPoint<string> successLogger = new EndPoint<string>(
+				(id) => {
+					this.LastSuccessfullyProcessed = id;
+				}
+			);
+			successLogger.Name = SUCCESS_LOGGER_NODE;
+			return successLogger;
+		}
+		public string LastSuccessfullyProcessed { get; set; }
+		public TaskNode SuccessLogger { get { return importFlow.GetTask(SUCCESS_LOGGER_NODE); } }
+		public TaskNode ApiCaller { get { return importFlow.GetTask(API_CALLER_NODE); } }
+		public TaskNode CsvReader { get { return importFlow.GetTask(CSV_READER_NODE); } }
+
+
     }
 }

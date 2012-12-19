@@ -29,7 +29,7 @@ namespace OVImport
         {
             var request = Request(endpoint, "POST");
             var json = JsonConvert.SerializeObject(req);
-            Console.WriteLine(json);
+            //Console.WriteLine(json);
             using (var writer = new StreamWriter(request.GetRequestStream()))
             {
                 writer.Write(json);
