@@ -157,6 +157,5 @@ namespace OVImport
 		public TaskNode ApiCaller { get { return importFlow.GetTask(API_CALLER_NODE); } }
 		public TaskNode CsvReader { get { return importFlow.GetTask(CSV_READER_NODE); } }
 
-
     }
 }

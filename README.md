@@ -112,3 +112,13 @@ xxx
 ### Side notes
 
 It is rumoured that this service is during christmas overloaded and may not be up, responsive or just busy at times.
+
+## Setting things up
+
+1. Fork this code to your own github account
+2. Clone the code locally 
+3. Try to build, if it fails saying something like 'Enable nuget package download in visual studio' but you don't see the checkbox upgrade nuget via the extension manager.
+4. Set the rest service as startup project (click run)
+5. Set the import tool as startup click run and see it crash
+6. Make a branch, fix the code
+7. Send me a pull request!
