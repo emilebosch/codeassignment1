@@ -56,7 +56,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Arguments.cs" />
-    <Compile Include="Lib\ProblemReportData.cs" />
     <Compile Include="Lib\SimpleRest.cs" />
     <Compile Include="Lib\OVTransactionImport.cs" />
     <Compile Include="Program.cs" />
