@@ -48,6 +48,9 @@ namespace OVImport
                     {
                         log.DebugFormat("Max retries reached, skipping line: {0}", CSVLine);
                     }  
+                } else
+                {
+                    log.ErrorFormat("Invalid line is skipped! (Incorrect number of fields) {0}", string.Join(",", csvFields));
                 }      
             }
         }
