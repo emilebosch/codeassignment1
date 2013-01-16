@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using MbUnit.Framework;
 using Microsoft.VisualBasic.FileIO;
 using System.Configuration;
+using OVImport.Models;
+using log4net;
 
 namespace OVImport
 {
@@ -15,6 +16,7 @@ namespace OVImport
     {
         TextFieldParser parser;
         SimpleRestApi api;
+        private static readonly ILog log = LogManager.GetLogger(typeof(Program));
 
         /// <summary>
         /// Imports the given csv file
@@ -22,41 +24,56 @@ namespace OVImport
         public void StartTransactionImport(string csvfile)
         {
             api = new SimpleRestApi(ConfigurationManager.AppSettings["ovservice"]);
+            log4net.Config.XmlConfigurator.Configure();
 
-            parser = new TextFieldParser(csvfile);
-            parser.Delimiters = new [] {","};
+            parser = new TextFieldParser(csvfile) {Delimiters = new[] {","}};
             parser.ReadFields();
 
             while (!parser.EndOfData)
-            {
-                var csvFields = parser.ReadFields();
-                var apiresponse = 
-                    api.Post("ovtransactionimport/process", 
-                    new
-                    {
-                        id = Convert.ToInt64(csvFields[0]),
-                        date = csvFields[1],
-                        station = csvFields[2],
-                        action = csvFields[3],
-                        cardid = Convert.ToInt64(csvFields[4]),
-                        userid = Convert.ToInt64(csvFields[5])
-                    },
-                    new
-                    {
-                        success = default(Boolean),
-                        error = default(String)
-                    });
+            {                
+                IList<string> csvFields = parser.ReadFields();
 
-                if (apiresponse.success)
+                if (HasValidNumberOfFields(csvFields))
                 {
-                    Console.WriteLine("Succesfully uploaded transaction!");
-                }
-                else
-                {
-                    throw new Exception("OMG ERROER!!!!");
+                    Line CSVLine = new Line(csvFields);
 
-                }
+                    try
+                    {
+                        Retry.Repeat(3)
+                         .WithPolling(TimeSpan.FromSeconds(1))
+                         .WithTimeout(TimeSpan.FromSeconds(10))
+                         .Until(() => PostCSVLine(CSVLine));
+                    }
+                    catch (Exception)
+                    {
+                        log.DebugFormat("Max retries reached, skipping line: {0}", CSVLine);
+                    }  
+                } else
+                {
+                    log.ErrorFormat("Invalid line is skipped! (Incorrect number of fields) {0}", string.Join(",", csvFields));
+                }      
             }
+        }
+
+        private bool HasValidNumberOfFields(IList<string> csvFields)
+        {
+            return csvFields.Count == 6;
+        }
+
+        private bool PostCSVLine(Line line)
+        {
+            APIResponse response = api.Post("ovtransactionimport/process", line, new APIResponse());
+
+            if (response.success)
+            {
+                log.Info("Succesfully uploaded transaction!");
+            }
+            else
+            {
+                log.ErrorFormat("API responsed with an error {0}: {1}", response.error, line);
+            }
+
+            return response.success;
         }
     }
 }
