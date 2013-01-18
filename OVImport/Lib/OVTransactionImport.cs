@@ -37,6 +37,17 @@ namespace OVImport
 						  {'s', GetSuccessLogger()}
 					  }
 					  );
+			int totalErrors = 0;
+			importFlow.Error += (o, args) =>
+				{
+					if (args.Node.Name == API_CALLER_NODE && totalErrors < Arguments.Current.MaxErrorsBeforeFail)
+					{
+						_logger.ErrorFormat("A record caused an error on the server even after retrying:\n{0}\nException: {1}", String.Join(",", (string[])args.ProcessedItem), args.Error);
+						totalErrors++;
+						args.StopProcessing = false;
+
+					}
+				};
 
 		}
 		/// <summary>

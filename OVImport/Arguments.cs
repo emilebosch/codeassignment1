@@ -10,8 +10,8 @@ namespace OVImport
 	[Description(@"OVImport
 Usage: OVImport (import|help) [switches]
 
-examples: OVimport import -csv ""datafile.csv""
-          OVimport import -csv ""datafile.csv"" -skipUntil 1207")]
+examples: OVimport import /csv ""datafile.csv""
+          OVimport import /csv ""datafile.csv"" /skipUntil 1207")]
 	public class Arguments
 	{
 		[ArgsMemberSwitch(0)]
@@ -27,10 +27,10 @@ examples: OVimport import -csv ""datafile.csv""
 		public int ParallelPosts { get; set; }
 		[ArgsMemberSwitch("r"), DefaultValue(0), Description("When an unexpected error is returned from the service, a \n\t\tretry is performed after a short wait. This can help against \n\t\tfailing batches by short failures and network hiccups.")]
 		public int PostRetries { get; set; }
+		[ArgsMemberSwitch("max-err"), DefaultValue(0), Description("Allow for a number of errors before failing the job.")]
+		public int MaxErrorsBeforeFail { get; set; }
 
 		public static Arguments Current { get; set; }
-
-
 	}
 	public enum ActionType
 	{
